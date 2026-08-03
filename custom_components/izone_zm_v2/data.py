@@ -1,4 +1,4 @@
-"""Custom types for integration_blueprint."""
+"""Custom types for izone_zm_v2."""
 
 from __future__ import annotations
 

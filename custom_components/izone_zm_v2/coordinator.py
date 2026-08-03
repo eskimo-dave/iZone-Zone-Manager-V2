@@ -1,4 +1,4 @@
-"""DataUpdateCoordinator for integration_blueprint."""
+"""DataUpdateCoordinator for izone_zm_v2."""
 
 from __future__ import annotations
 

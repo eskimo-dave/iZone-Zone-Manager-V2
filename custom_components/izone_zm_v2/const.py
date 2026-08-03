@@ -1,8 +1,8 @@
-"""Constants for integration_blueprint."""
+"""Constants for izone_zm_v2."""
 
 from logging import Logger, getLogger
 
 LOGGER: Logger = getLogger(__package__)
 
-DOMAIN = "integration_blueprint"
+DOMAIN = "izone_zm_v2"
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"

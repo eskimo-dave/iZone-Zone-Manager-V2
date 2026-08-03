@@ -1,0 +1,12 @@
+{
+  "domain": "izone_zm_v2",
+  "name": "iZone Zone Manager V2",
+  "codeowners": [
+    "@eskimo-dave"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/eskimo-dave/iZone-Zone-Manager-V2",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/eskimo-dave/iZone-Zone-Manager-V2/issues",
+  "version": "0.1.0"
+}

@@ -1,5 +1,5 @@
 {
-    "name": "Integration blueprint",
+    "name": "izone-zone-manager-v2",
     "homeassistant": "2026.6.4",
     "hacs": "2.0.5"
 }
