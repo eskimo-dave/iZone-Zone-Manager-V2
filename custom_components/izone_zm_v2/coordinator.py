@@ -1,38 +1,45 @@
-"""DataUpdateCoordinator for izone_zm_v2."""
-
+"""DataUpdateCoordinator for iZone Local."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import logging
+from dataclasses import dataclass
+from datetime import timedelta
+from typing import Any
 
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import (
-    IntegrationBlueprintApiClientAuthenticationError,
-    IntegrationBlueprintApiClientError,
-    IntegrationBlueprintApiClientRateLimitError,
-)
+from .api import IZoneApiClient, IZoneApiError
+from .const import DOMAIN, SCAN_INTERVAL_SECONDS
 
-if TYPE_CHECKING:
-    from .data import IntegrationBlueprintConfigEntry
+_LOGGER = logging.getLogger(__name__)
 
 
-# https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-class BlueprintDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching data from the API."""
+@dataclass
+class IZoneData:
+    """Snapshot of system + all zone states for one poll cycle."""
 
-    config_entry: IntegrationBlueprintConfigEntry
+    system: dict[str, Any]
+    zones: list[dict[str, Any]]
 
-    async def _async_update_data(self) -> Any:
-        """Update data via library."""
+
+class IZoneCoordinator(DataUpdateCoordinator[IZoneData]):
+    """Polls the iZone controller for system and zone state."""
+
+    def __init__(self, hass: HomeAssistant, api: IZoneApiClient, zone_count: int) -> None:
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=timedelta(seconds=SCAN_INTERVAL_SECONDS),
+        )
+        self.api = api
+        self.zone_count = zone_count
+
+    async def _async_update_data(self) -> IZoneData:
         try:
-            return await self.config_entry.runtime_data.client.async_get_data()
-        except IntegrationBlueprintApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
-        except IntegrationBlueprintApiClientRateLimitError as exception:
-            raise UpdateFailed(
-                exception,
-                retry_after=exception.retry_after,
-            ) from exception
-        except IntegrationBlueprintApiClientError as exception:
-            raise UpdateFailed(exception) from exception
+            system = await self.api.async_get_system()
+            zones = [await self.api.async_get_zone(i) for i in range(self.zone_count)]
+        except IZoneApiError as err:
+            raise UpdateFailed(str(err)) from err
+        return IZoneData(system=system, zones=zones)

@@ -2,15 +2,13 @@
     "config": {
         "step": {
             "user": {
-                "description": "If you need help with the configuration have a look here: {documentation_url}",
+                "description": "Provide the static IP of your iZone Controller",
                 "data": {
-                    "username": "Username",
-                    "password": "Password"
+                    "ip_address": "Static IP Address"
                 }
             }
         },
         "error": {
-            "auth": "Username/Password is wrong.",
             "connection": "Unable to connect to the server.",
             "unknown": "Unknown error occurred."
         },
