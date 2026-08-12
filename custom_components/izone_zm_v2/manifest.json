@@ -1,10 +1,10 @@
 {
-  "domain": "izone_local",
-  "name": "iZone (Local REST)",
+  "domain": "izone_zm_v2",
+  "name": "iZone Zone Manager V2",
   "codeowners": ["@eskimo-dave"],
   "config_flow": true,
-  "documentation": "https://github.com/eskimo-dave/iZone-Zone-Manager",
-  "issue_tracker": "https://github.com/eskimo-dave/iZone-Zone-Manager/issues",
+  "documentation": "https://github.com/eskimo-dave/iZone-Zone-Manager-V2",
+  "issue_tracker": "https://github.com/eskimo-dave/iZone-Zone-Manager-V2/issues",
   "iot_class": "local_polling",
   "requirements": [],
   "version": "0.1.0"

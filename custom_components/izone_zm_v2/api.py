@@ -1,14 +1,13 @@
-"""Thin async client for the iZone local REST protocol (iZoneRequestV2 / iZoneCommandV2).
+"""
+Thin async client for the iZone local REST protocol (iZoneRequestV2 / iZoneCommandV2).
 
 Read-side (iZoneRequestV2) field names and scaling are CONFIRMED against a
 live controller - see async_get_system/async_get_zone docstrings.
 
 Write-side (iZoneCommandV2) payloads below are sourced from the working
-rest_command: templates in the original izone.yaml (not independently
-re-tested against the live controller yet, but that YAML was in active use
-controlling this exact unit) - flat, unwrapped fields like {"SysOn": 1},
-not the nested guesses from earlier drafts of this file.
+rest_command: templates in the original iz_zm izone.yaml
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -36,7 +35,8 @@ class IZoneApiClient:
         self._session = session
 
     async def _post(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
-        """POST to iZoneRequestV2 and parse the JSON response body.
+        """
+        POST to iZoneRequestV2 and parse the JSON response body.
 
         Only used for reads - iZoneRequestV2 always returns a real JSON
         body. iZoneCommandV2 (writes) does NOT reliably return valid JSON
@@ -57,36 +57,42 @@ class IZoneApiClient:
                 text = raw.decode("utf-8", errors="replace").strip()
                 return json.loads(text)
         except TimeoutError as err:
-            raise IZoneApiError(f"Timed out contacting iZone controller at {url}") from err
+            raise IZoneApiError(
+                f"Timed out contacting iZone controller at {url}"
+            ) from err
         except aiohttp.ClientError as err:
-            raise IZoneApiError(f"Error contacting iZone controller at {url}: {err}") from err
+            raise IZoneApiError(
+                f"Error contacting iZone controller at {url}: {err}"
+            ) from err
         except (KeyError, ValueError) as err:
-            raise IZoneApiError(f"Unexpected response from iZone controller: {err}") from err
+            raise IZoneApiError(
+                f"Unexpected response from iZone controller: {err}"
+            ) from err
 
     async def _post_command(self, url: str, payload: dict[str, Any]) -> None:
-        """POST to iZoneCommandV2 and ignore the response body.
+        """
+        POST to iZoneCommandV2 and ignore the response body.
 
         The controller's command acknowledgement isn't reliably valid JSON
         (sometimes empty, sometimes something starting with "{" that isn't
-        properly quoted) - we don't need its content anyway, since we
-        re-poll via the coordinator after every command. Only the HTTP
-        status matters here.
+        properly quoted), but isn't required, since we re-poll via the coordinator after every command.
+        Only the HTTP status matters.
         """
         try:
             async with asyncio.timeout(REQUEST_TIMEOUT):
                 response = await self._session.post(url, json=payload)
                 response.raise_for_status()
         except TimeoutError as err:
-            raise IZoneApiError(f"Timed out contacting iZone controller at {url}") from err
+            raise IZoneApiError(
+                f"Timed out contacting iZone controller at {url}"
+            ) from err
         except aiohttp.ClientError as err:
-            raise IZoneApiError(f"Error contacting iZone controller at {url}: {err}") from err
+            raise IZoneApiError(
+                f"Error contacting iZone controller at {url}: {err}"
+            ) from err
 
     async def async_get_system(self) -> dict[str, Any]:
-        """Fetch system-level state (Type 1). Response includes NoOfZones.
-
-        CONFIRMED shape from a live controller: top-level keys are
-        AirStreamDeviceUId / DeviceType / SystemV2 (not "iZoneV2Response").
-        """
+        # Fetch system-level state (Type 1). Response includes NoOfZones.
         data = await self._post(
             self._request_url,
             {"iZoneV2Request": {"Type": 1, "No": 0, "No1": 0}},
@@ -97,13 +103,7 @@ class IZoneApiClient:
             raise IZoneApiError(f"Unexpected system response shape: {data}") from err
 
     async def async_get_zone(self, index: int) -> dict[str, Any]:
-        """Fetch a single zone's state (Type 2).
-
-        CONFIRMED shape from a live controller: envelope key is "ZonesV2"
-        (plural), containing Name/Mode/Temp/Setpoint - Temp and Setpoint use
-        the same Celsius*100 raw int scaling as the system response. Mode
-        codes (1=open, 2=closed, 3=auto) confirmed by cycling in the app.
-        """
+        # Fetch a single zone's state (Type 2).
         data = await self._post(
             self._request_url,
             {"iZoneV2Request": {"Type": 2, "No": index, "No1": 0}},
@@ -114,13 +114,7 @@ class IZoneApiClient:
             raise IZoneApiError(f"Unexpected zone response shape: {data}") from err
 
     async def async_get_favourite(self, index: int) -> dict[str, Any]:
-        """Fetch a single favourite's info, including its configured name.
-
-        CONFIRMED shape from a live controller: envelope key is
-        "SchedulesV2" (favourites are stored as the controller's schedule
-        slots), containing Name/Index/Mode/Zones etc. Request Type 3 was
-        correct on the first guess.
-        """
+        # Fetch a single favourite's info, including its configured name.
         data = await self._post(
             self._request_url,
             {"iZoneV2Request": {"Type": FAVOURITE_REQUEST_TYPE, "No": index, "No1": 0}},
@@ -140,8 +134,9 @@ class IZoneApiClient:
         await self._post_command(self._command_url, {"SysFan": fan})
 
     async def async_set_setpoint(self, raw_setpoint: int) -> None:
-        """Set the system setpoint. Expects the raw protocol value (C * 100) -
-        convert with const.celsius_to_raw() before calling this."""
+
+        # Set the system setpoint. Expects the raw protocol value (C * 100) - convert with const.celsius_to_raw() before calling this.
+
         await self._post_command(self._command_url, {"SysSetpoint": raw_setpoint})
 
     async def async_set_zone_mode(self, index: int, mode: int) -> None:
@@ -150,15 +145,14 @@ class IZoneApiClient:
         )
 
     async def async_set_zone_setpoint(self, index: int, raw_setpoint: int) -> None:
-        """Set a zone's setpoint. Expects the raw protocol value (C * 100) -
-        convert with const.celsius_to_raw() before calling this."""
+        # Set a zone's setpoint. Expects the raw protocol value (C * 100) - convert with const.celsius_to_raw() before calling this.
         await self._post_command(
             self._command_url,
             {"ZoneSetpoint": {"Index": index, "Setpoint": raw_setpoint}},
         )
 
     async def async_set_favourite(self, favourite_index: int) -> None:
-        """Activate a favourite. favourite_index is 0-based (matching the
-        NUM_FAVOURITES range used elsewhere) - the controller itself is
-        1-based, so we add 1 here."""
-        await self._post_command(self._command_url, {"FavouriteSet": favourite_index + 1})
+        # Activate a favourite. favourite_index is 0-based (matching the NUM_FAVOURITES range used elsewhere) - the controller itself is 1-based, so we add 1 here.
+        await self._post_command(
+            self._command_url, {"FavouriteSet": favourite_index + 1}
+        )

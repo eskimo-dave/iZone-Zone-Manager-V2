@@ -46,16 +46,6 @@ People *love* thorough bug reports. I'm not even kidding.
 
 Use [black](https://github.com/ambv/black) to make sure the code follows the style.
 
-## Test your code modification
-
-This custom component is based on [izone_zm_v2 template](https://github.com/eskimo-dave/iZone-Zone-Manager-V2).
-
-It comes with development environment in a container, easy to launch
-if you use Visual Studio Code. With this container you will have a stand alone
-Home Assistant instance running and already configured with the included
-[`configuration.yaml`](./config/configuration.yaml)
-file.
-
 ## License
 
 By contributing, you agree that your contributions will be licensed under its MIT License.

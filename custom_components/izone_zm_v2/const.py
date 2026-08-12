@@ -1,9 +1,9 @@
-"""Constants for the iZone Local integration."""
+"""Constants for the iZone Zone Manager V2 integration."""
 from __future__ import annotations
 
 from homeassistant.components.climate import HVACMode
 
-DOMAIN = "izone_local"
+DOMAIN = "izone_zm_v2"
 DEFAULT_NAME = "iZone"
 
 CONF_ZONE_COUNT = "zone_count"

@@ -35,7 +35,8 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up iZone favourite buttons from a config entry.
+    """
+    Set up iZone favourite buttons from a config entry.
 
     Favourite names are fetched once at setup (they're set-and-forget on
     the controller, so there's no need to poll them continuously like zone
@@ -71,8 +72,9 @@ class IZoneFavouriteButton(CoordinatorEntity[IZoneCoordinator], ButtonEntity):
         self._index = index
         self._attr_unique_id = f"{entry.entry_id}_favourite_{index}"
         self._attr_name = name or f"Favourite {index + 1}"
-        # Grouped under the same "iZone" device as the system climate
-        # entity, rather than getting their own devices.
+        # Grouped under the same "iZone" device as the system climate entity,
+        # rather than getting their own devices.
+
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry.entry_id)})
 
     async def async_press(self) -> None:

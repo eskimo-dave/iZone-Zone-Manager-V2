@@ -1,4 +1,5 @@
-"""Config flow for iZone Local.
+"""
+Config flow for iZone Zone Manager V2.
 
 Prompts for the controller's host/IP, makes one real request against it to
 validate connectivity, and auto-detects the number of zones from the
@@ -24,7 +25,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema({vol.Required(CONF_HOST): str})
 
 
 class IZoneLocalConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for iZone Local."""
+    """Handle a config flow for iZone Zone Manager V2."""
 
     VERSION = 1
 

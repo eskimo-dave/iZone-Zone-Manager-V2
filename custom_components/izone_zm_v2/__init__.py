@@ -1,4 +1,4 @@
-"""The iZone Local integration."""
+"""The iZone Zone Manager V2 integration."""
 from __future__ import annotations
 
 import logging
@@ -18,7 +18,7 @@ PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.BUTTON]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up iZone Local from a config entry."""
+    """Set up iZone Zone Manager V2 from a config entry."""
     host = entry.data[CONF_HOST]
     zone_count = entry.data[CONF_ZONE_COUNT]
 
