@@ -36,8 +36,15 @@ jobs:
           with open(path) as f:
               data = json.load(f)
           data['version'] = '${{ steps.version.outputs.version }}'
+          # hassfest requires: domain, name, then remaining keys alphabetical
+          ordered = {}
+          for key in ('domain', 'name'):
+              if key in data:
+                  ordered[key] = data.pop(key)
+          for key in sorted(data):
+              ordered[key] = data[key]
           with open(path, 'w') as f:
-              json.dump(data, f, indent=2)
+              json.dump(ordered, f, indent=2)
               f.write('\n')
           "
 
