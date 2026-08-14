@@ -75,7 +75,8 @@ class IZoneApiClient:
 
         The controller's command acknowledgement isn't reliably valid JSON
         (sometimes empty, sometimes something starting with "{" that isn't
-        properly quoted), but isn't required, since we re-poll via the coordinator after every command.
+        properly quoted), but isn't required, since we re-poll via the coordinator
+        after every command.
         Only the HTTP status matters.
         """
         try:
