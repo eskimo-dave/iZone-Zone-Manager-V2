@@ -1,4 +1,5 @@
 """Constants for the iZone Zone Manager V2 integration."""
+
 from __future__ import annotations
 
 from homeassistant.components.climate import HVACMode
@@ -7,8 +8,10 @@ DOMAIN = "izone_zm_v2"
 DEFAULT_NAME = "iZone"
 
 CONF_ZONE_COUNT = "zone_count"
+CONF_SCAN_INTERVAL_SECONDS = "scan_interval_seconds"
 
 SCAN_INTERVAL_SECONDS = 45
+MIN_SCAN_INTERVAL_SECONDS = 10
 REQUEST_TIMEOUT = 10
 
 # --- Protocol mode codes -------------------------------------------------

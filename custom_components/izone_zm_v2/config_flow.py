@@ -12,12 +12,19 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HOST
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import IZoneApiClient, IZoneApiError
-from .const import CONF_ZONE_COUNT, DEFAULT_NAME, DOMAIN
+from .const import (
+    CONF_SCAN_INTERVAL_SECONDS,
+    CONF_ZONE_COUNT,
+    DEFAULT_NAME,
+    DOMAIN,
+    MIN_SCAN_INTERVAL_SECONDS,
+    SCAN_INTERVAL_SECONDS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -71,5 +78,65 @@ class IZoneLocalConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=STEP_USER_DATA_SCHEMA,
+            errors=errors,
+        )
+    @staticmethod
+    def async_get_options_flow(config_entry: ConfigEntry) -> IZoneOptionsFlow:
+        return IZoneOptionsFlow()
+
+
+class IZoneOptionsFlow(OptionsFlow):
+
+    #Lets the host and poll interval be changed after initial setup,
+    #without deleting and re-adding the integration.
+
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        current_host = self.config_entry.data.get(CONF_HOST)
+        current_interval = self.config_entry.options.get(
+            CONF_SCAN_INTERVAL_SECONDS, SCAN_INTERVAL_SECONDS
+        )
+
+        if user_input is not None:
+            host = user_input[CONF_HOST]
+            scan_interval = user_input[CONF_SCAN_INTERVAL_SECONDS]
+
+            session = async_get_clientsession(self.hass)
+            client = IZoneApiClient(host, session)
+            try:
+                # Same validate-before-saving approach as initial setup -
+                # don't let a typo'd IP get saved silently.
+                await client.async_get_system()
+            except IZoneApiError:
+                _LOGGER.debug(
+                    "Failed to contact iZone controller at %s", host, exc_info=True
+                )
+                errors["base"] = "cannot_connect"
+            else:
+                # Host lives in entry.data (it's part of entry identity,
+                # not options), so update it directly rather than through
+                # the options dict this step otherwise returns.
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    data={**self.config_entry.data, CONF_HOST: host},
+                )
+                return self.async_create_entry(
+                    title="",
+                    data={CONF_SCAN_INTERVAL_SECONDS: scan_interval},
+                )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_HOST, default=current_host): str,
+                    vol.Required(
+                        CONF_SCAN_INTERVAL_SECONDS, default=current_interval
+                    ): vol.All(int, vol.Range(min=MIN_SCAN_INTERVAL_SECONDS)),
+                }
+            ),
             errors=errors,
         )

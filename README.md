@@ -10,20 +10,8 @@ A local Home Assistant integration for newer Rinnai/iZone HVAC systems, designed
 
 ## Overview
 
-This integration provides a practical way to connect a local iZone controller to Home Assistant without relying on cloud-based services. It focuses on zone-level control, temperature readings, and the main duct/supply temperature sensor.
+This integration provides a practical way to connect a local iZone controller to Home Assistant without relying on cloud-based services. It focuses on zone-level control, temperature readings, and system sensors including the main duct/supply temperature, air quality readings, error messages.
 This is designed to work on all systems using the iZoneRequestV2 API
-
-## Prerequisites
-
-- Static IP configured for your iZone adapter
-- A compatible Rinnai/iZone controller available on the local network.
-    - This can be validated by running the following call:
-  ```bash
-    curl -X POST http://<IP ADDRESS>/iZoneRequestV2 \
-  -H "Content-Type: application/json" \
-  -d '{"iZoneV2Request":{"Type":1,"No":0,"No1":0}}'
-  ```
-- Home Assistant running with HACS available
 
 ## Supported versions
 
@@ -42,15 +30,32 @@ This is designed to work on all systems using the iZoneRequestV2 API
 - Adjusting dampers: open, closed, and auto
 - Reading duct temperature
 - Automatic creation of favourite buttons with naming support
+- Air quality readings
+- Error messages and runtime hours
+- Adjustable scan interval (default 45 seconds)
 
 ###  Known limitations
 
 - Updating values in favourites may not be possible with the current implementation
+- Sleep timer not created
+- Unsure what the filter status is, waiting on more testing.
+
+## Prerequisites
+
+- Static IP configured for your iZone adapter
+- A compatible Rinnai/iZone controller available on the local network.
+    - This can be validated by running the following call and getting a valid response:
+  ```bash
+    curl -X POST http://<IP ADDRESS>/iZoneRequestV2 \
+  -H "Content-Type: application/json" \
+  -d '{"iZoneV2Request":{"Type":1,"No":0,"No1":0}}'
+  ```
+- Home Assistant running with HACS available
 
 ## Installation
 
 1. Ensure your prerequisites are complete.
-2. In HACS, add this repository:
+2. In HACS, add this repository as an integration type:
    [https://github.com/eskimo-dave/iZone-Zone-Manager-V2](https://github.com/eskimo-dave/iZone-Zone-Manager-V2)
 3. Install the integration from HACS.
 4. Add the iZone integration in Home Assistant and follow the setup prompts.

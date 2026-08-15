@@ -15,5 +15,20 @@
     "abort": {
       "already_configured": "This iZone controller is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "iZone settings",
+        "description": "Update the controller's address or how often it's polled.",
+        "data": {
+          "host": "Host or IP address",
+          "scan_interval_seconds": "Poll interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the iZone controller at that address. Check the IP and that it's reachable on your network."
+    }
   }
 }

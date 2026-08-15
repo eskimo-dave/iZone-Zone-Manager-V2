@@ -1,4 +1,5 @@
-"""DataUpdateCoordinator for iZone Local."""
+"""DataUpdateCoordinator for iZone ZM V2."""
+
 from __future__ import annotations
 
 import logging
@@ -26,12 +27,18 @@ class IZoneData:
 class IZoneCoordinator(DataUpdateCoordinator[IZoneData]):
     """Polls the iZone controller for system and zone state."""
 
-    def __init__(self, hass: HomeAssistant, api: IZoneApiClient, zone_count: int) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        api: IZoneApiClient,
+        zone_count: int,
+        scan_interval_seconds: int = SCAN_INTERVAL_SECONDS,
+    ) -> None:
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=SCAN_INTERVAL_SECONDS),
+            update_interval=timedelta(seconds=scan_interval_seconds),
         )
         self.api = api
         self.zone_count = zone_count

@@ -9,22 +9,33 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import IZoneApiClient
-from .const import CONF_ZONE_COUNT, DOMAIN
+from .const import (
+    CONF_SCAN_INTERVAL_SECONDS,
+    CONF_ZONE_COUNT,
+    DOMAIN,
+    SCAN_INTERVAL_SECONDS,
+)
 from .coordinator import IZoneCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.BUTTON, Platform.SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.CLIMATE,
+    Platform.BUTTON,
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up iZone Zone Manager V2 from a config entry."""
+    """Set up iZone Local from a config entry."""
     host = entry.data[CONF_HOST]
     zone_count = entry.data[CONF_ZONE_COUNT]
+    scan_interval = entry.options.get(CONF_SCAN_INTERVAL_SECONDS, SCAN_INTERVAL_SECONDS)
 
     session = async_get_clientsession(hass)
     api = IZoneApiClient(host, session)
-    coordinator = IZoneCoordinator(hass, api, zone_count)
+    coordinator = IZoneCoordinator(hass, api, zone_count, scan_interval)
 
     # Raises ConfigEntryNotReady automatically if the first poll fails
     # (DataUpdateCoordinator wraps UpdateFailed for us here), which tells
