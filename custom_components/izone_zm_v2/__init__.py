@@ -14,7 +14,7 @@ from .coordinator import IZoneCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.BUTTON]
+PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.BUTTON, Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
