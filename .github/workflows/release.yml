@@ -60,6 +60,11 @@ jobs:
             git push origin main
           fi
 
+      - name: Move tag to the bump commit
+        run: |
+          git tag -f "${{ steps.version.outputs.tag }}" HEAD
+          git push origin "${{ steps.version.outputs.tag }}" --force
+          
       - name: Create GitHub Release
         uses: softprops/action-gh-release@fe965f7af51af5f2602596916f38a38df2e33de0 # v3.0.2
         with:
