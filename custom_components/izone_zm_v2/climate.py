@@ -8,7 +8,7 @@ ClimateEntity per zone (auto-detected at config-flow time from NoOfZones).
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
@@ -66,7 +66,7 @@ async def async_setup_entry(
             )
             continue
         entities.append(
-            IZoneZoneClimate(coordinator, entry, host, zone_index, zone.get("Name"))
+            IZoneZoneClimate(coordinator, entry, zone_index, zone.get("Name"))
         )
     async_add_entities(entities)
 
@@ -80,8 +80,11 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
     _attr_target_temperature_step = 0.5
     _attr_min_temp = 15
     _attr_max_temp = 30
-    _attr_hvac_modes = [HVACMode.OFF, *HVAC_MODE_TO_IZONE.keys()]
-    _attr_fan_modes = list(FAN_MODE_TO_IZONE.keys())
+    _attr_hvac_modes: ClassVar[tuple[str, ...]] = (
+        HVACMode.OFF,
+        *HVAC_MODE_TO_IZONE.keys(),
+    )
+    _attr_fan_modes: ClassVar[tuple[str, ...]] = tuple(FAN_MODE_TO_IZONE.keys())
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
@@ -90,7 +93,10 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
     )
 
     def __init__(
-        self, coordinator: IZoneCoordinator, entry: ConfigEntry, host: str
+        self,
+        coordinator: IZoneCoordinator,
+        entry: ConfigEntry,
+        host: str,
     ) -> None:
         """Initialize the system climate entity."""
         super().__init__(coordinator)
@@ -100,7 +106,6 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
             name="iZone",
             configuration_url=f"http://{host}",
         )
-
     @property
     def _system(self) -> dict[str, Any]:
         return cast("dict[str, Any]", self.coordinator.data.system)
@@ -177,14 +182,17 @@ class IZoneZoneClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
     _attr_target_temperature_step = 0.5
     _attr_min_temp = 15
     _attr_max_temp = 30
-    _attr_hvac_modes = [HVACMode.OFF, HVACMode.FAN_ONLY, HVACMode.AUTO]
+    _attr_hvac_modes: ClassVar[tuple[HVACMode, ...]] = (
+        HVACMode.OFF,
+        HVACMode.FAN_ONLY,
+        HVACMode.AUTO,
+    )
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
 
     def __init__(
         self,
         coordinator: IZoneCoordinator,
         entry: ConfigEntry,
-        host: str,
         zone_index: int,
         zone_name: str | None,
     ) -> None:

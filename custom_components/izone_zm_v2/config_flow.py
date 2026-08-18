@@ -5,6 +5,7 @@ Prompts for the controller's host/IP, makes one real request against it to
 validate connectivity, and auto-detects the number of zones from the
 system response's NoOfZones field before creating the entry.
 """
+
 from __future__ import annotations
 
 import logging
@@ -57,7 +58,9 @@ class IZoneLocalConfigFlow(ConfigFlow, domain=DOMAIN):
                 # gives us NoOfZones so the user never has to type it in.
                 system = await client.async_get_system()
             except IZoneApiError:
-                _LOGGER.debug("Failed to contact iZone controller at %s", host, exc_info=True)
+                _LOGGER.debug(
+                    "Failed to contact iZone controller at %s", host, exc_info=True
+                )
                 errors["base"] = "cannot_connect"
             else:
                 zone_count = system.get("NoOfZones")
@@ -84,23 +87,20 @@ class IZoneLocalConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
         )
+
     @staticmethod
-    def async_get_options_flow(config_entry: ConfigEntry) -> IZoneOptionsFlow:
-        """Get the options flow for this integration."""
-        return IZoneOptionsFlow(config_entry)
+    def async_get_options_flow(_config_entry: ConfigEntry) -> IZoneOptionsFlow:
+        """Return the options flow for this handler."""
+        return IZoneOptionsFlow()
 
 
 class IZoneOptionsFlow(OptionsFlow):
     """Change host and poll interval."""
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize the options flow."""
-        self.config_entry = config_entry
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Options prompts for configuration."""
+        """Show the form to change host and poll interval."""
         errors: dict[str, str] = {}
         current_host = self.config_entry.data.get(CONF_HOST)
         current_interval = self.config_entry.options.get(
