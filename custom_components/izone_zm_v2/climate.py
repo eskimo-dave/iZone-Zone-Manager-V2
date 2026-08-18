@@ -125,9 +125,9 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         if hvac_mode == HVACMode.OFF:
-            await self.coordinator.api.async_set_power(False)
+            await self.coordinator.api.async_set_power(on=False)
         else:
-            await self.coordinator.api.async_set_power(True)
+            await self.coordinator.api.async_set_power(on=True)
             izone_mode = HVAC_MODE_TO_IZONE.get(hvac_mode)
             if izone_mode is not None:
                 await self.coordinator.api.async_set_mode(izone_mode)
@@ -140,11 +140,11 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_turn_on(self) -> None:
-        await self.coordinator.api.async_set_power(True)
+        await self.coordinator.api.async_set_power(on=True)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
-        await self.coordinator.api.async_set_power(False)
+        await self.coordinator.api.async_set_power(on=False)
         await self.coordinator.async_request_refresh()
 
 

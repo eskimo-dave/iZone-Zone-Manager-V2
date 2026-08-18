@@ -11,8 +11,12 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_HOST
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -82,18 +86,21 @@ class IZoneLocalConfigFlow(ConfigFlow, domain=DOMAIN):
         )
     @staticmethod
     def async_get_options_flow(config_entry: ConfigEntry) -> IZoneOptionsFlow:
-        return IZoneOptionsFlow()
+        """Get the options flow for this integration."""
+        return IZoneOptionsFlow(config_entry)
 
 
 class IZoneOptionsFlow(OptionsFlow):
+    """Change host and poll interval."""
 
-    #Lets the host and poll interval be changed after initial setup,
-    #without deleting and re-adding the integration.
-
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize the options flow."""
+        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        """Options prompts for configuration."""
         errors: dict[str, str] = {}
         current_host = self.config_entry.data.get(CONF_HOST)
         current_interval = self.config_entry.options.get(

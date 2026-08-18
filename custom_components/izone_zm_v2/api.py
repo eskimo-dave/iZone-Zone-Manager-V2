@@ -30,6 +30,7 @@ class IZoneApiClient:
     """Talks to a single iZone controller over its local REST API."""
 
     def __init__(self, host: str, session: aiohttp.ClientSession) -> None:
+        """Initialize the client with the controller's host and an aiohttp session."""
         self._request_url = f"http://{host}/iZoneRequestV2"
         self._command_url = f"http://{host}/iZoneCommandV2"
         self._session = session
@@ -57,9 +58,9 @@ class IZoneApiClient:
                 text = raw.decode("utf-8", errors="replace").strip()
                 return json.loads(text)
         except TimeoutError as err:
-            raise IZoneApiError(
-                f"Timed out contacting iZone controller at {url}"
-            ) from err
+            message = f"Timed out contacting iZone controller at {url}"
+            _LOGGER.exception(message)
+            raise IZoneApiError(message) from err
         except aiohttp.ClientError as err:
             raise IZoneApiError(
                 f"Error contacting iZone controller at {url}: {err}"
@@ -125,7 +126,7 @@ class IZoneApiClient:
         except KeyError as err:
             raise IZoneApiError(f"Unexpected favourite response shape: {data}") from err
 
-    async def async_set_power(self, on: bool) -> None:
+    async def async_set_power(self, *, on: bool) -> None:
         await self._post_command(self._command_url, {"SysOn": 1 if on else 0})
 
     async def async_set_mode(self, mode: int) -> None:
