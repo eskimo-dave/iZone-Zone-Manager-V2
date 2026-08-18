@@ -1,24 +1,28 @@
-"""Climate platform for iZone Local.
+"""
+Climate platform for iZone Local.
 
 Exposes one ClimateEntity for the ducted system as a whole, plus one
 ClimateEntity per zone (auto-detected at config-flow time from NoOfZones).
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
-from homeassistant.components.climate import (
-    ClimateEntity,
+from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate.const import (
     ClimateEntityFeature,
     HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, CONF_HOST, UnitOfTemperature
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     DOMAIN,
@@ -85,7 +89,10 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
         | ClimateEntityFeature.TURN_OFF
     )
 
-    def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry, host: str) -> None:
+    def __init__(
+        self, coordinator: IZoneCoordinator, entry: ConfigEntry, host: str
+    ) -> None:
+        """Initialize the system climate entity."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_system"
         self._attr_device_info = DeviceInfo(
@@ -96,27 +103,34 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
 
     @property
     def _system(self) -> dict[str, Any]:
-        return self.coordinator.data.system
+        return cast("dict[str, Any]", self.coordinator.data.system)
 
     @property
     def current_temperature(self) -> float | None:
+        """Return the current supply temperature in Celsius."""
         return raw_to_celsius(self._system.get("Supply"))
 
     @property
     def target_temperature(self) -> float | None:
+        """Return the current system setpoint in Celsius."""
         return raw_to_celsius(self._system.get("Setpoint"))
 
     @property
     def hvac_mode(self) -> HVACMode:
+        """Return the current system mode as a Home Assistant HVACMode."""
         if not self._system.get("SysOn"):
             return HVACMode.OFF
-        return IZONE_MODE_TO_HVAC.get(self._system.get("SysMode"), HVACMode.OFF)
+        return IZONE_MODE_TO_HVAC.get(
+            cast("int", self._system.get("SysMode")), HVACMode.OFF
+        )
 
     @property
     def fan_mode(self) -> str | None:
-        return IZONE_FAN_TO_MODE.get(self._system.get("SysFan"))
+        """Return the current system fan mode."""
+        return IZONE_FAN_TO_MODE.get(cast("int", self._system.get("SysFan")))
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
+        """Set the system setpoint temperature."""
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature is None:
             return
@@ -124,6 +138,7 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set the system HVAC mode."""
         if hvac_mode == HVACMode.OFF:
             await self.coordinator.api.async_set_power(on=False)
         else:
@@ -134,16 +149,19 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
+        """Set the system fan mode."""
         izone_fan = FAN_MODE_TO_IZONE.get(fan_mode)
         if izone_fan is not None:
             await self.coordinator.api.async_set_fan(izone_fan)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_on(self) -> None:
+        """Turn on the system."""
         await self.coordinator.api.async_set_power(on=True)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self) -> None:
+        """Turn off the system."""
         await self.coordinator.api.async_set_power(on=False)
         await self.coordinator.async_request_refresh()
 
@@ -152,7 +170,9 @@ class IZoneZoneClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
     """Representation of a single iZone zone."""
 
     _attr_has_entity_name = True
-    _attr_name = None  # use the device name (the controller's zone Name) as the entity name
+    _attr_name = (
+        None  # use the device name (the controller's zone Name) as the entity name
+    )
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 0.5
     _attr_min_temp = 15
@@ -168,6 +188,7 @@ class IZoneZoneClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
         zone_index: int,
         zone_name: str | None,
     ) -> None:
+        """Initialize a zone climate entity."""
         super().__init__(coordinator)
         self._zone_index = zone_index
         self._attr_unique_id = f"{entry.entry_id}_zone_{zone_index}"
@@ -183,14 +204,17 @@ class IZoneZoneClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
 
     @property
     def current_temperature(self) -> float | None:
+        """Return the current zone temperature in Celsius."""
         return raw_to_celsius(self._zone.get("Temp"))
 
     @property
     def target_temperature(self) -> float | None:
+        """Return the target temperature in Celsius."""
         return raw_to_celsius(self._zone.get("Setpoint"))
 
     @property
     def hvac_mode(self) -> HVACMode:
+        """Return the current zone mode as a Home Assistant HVACMode."""
         zone_mode = self._zone.get("Mode")
         if zone_mode == ZONE_MODE_CLOSE:
             return HVACMode.OFF
@@ -199,6 +223,7 @@ class IZoneZoneClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
         return HVACMode.FAN_ONLY
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
+        """Set the zone setpoint temperature."""
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature is None:
             return
@@ -208,6 +233,7 @@ class IZoneZoneClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
+        """Set the zone HVAC mode."""
         zone_mode = {
             HVACMode.OFF: ZONE_MODE_CLOSE,
             HVACMode.AUTO: ZONE_MODE_AUTO,

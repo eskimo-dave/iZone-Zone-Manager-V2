@@ -62,13 +62,13 @@ class IZoneApiClient:
             _LOGGER.exception(message)
             raise IZoneApiError(message) from err
         except aiohttp.ClientError as err:
-            raise IZoneApiError(
-                f"Error contacting iZone controller at {url}: {err}"
-            ) from err
+            message = f"Error contacting iZone controller at {url}: {err}"
+            _LOGGER.exception(message)
+            raise IZoneApiError(message) from err
         except (KeyError, ValueError) as err:
-            raise IZoneApiError(
-                f"Unexpected response from iZone controller: {err}"
-            ) from err
+            message = f"Unexpected response from iZone controller: {err}"
+            _LOGGER.exception(message)
+            raise IZoneApiError(message) from err
 
     async def _post_command(self, url: str, payload: dict[str, Any]) -> None:
         """
@@ -85,16 +85,16 @@ class IZoneApiClient:
                 response = await self._session.post(url, json=payload)
                 response.raise_for_status()
         except TimeoutError as err:
-            raise IZoneApiError(
-                f"Timed out contacting iZone controller at {url}"
-            ) from err
+            message = f"Timed out contacting iZone controller at {url}"
+            _LOGGER.exception(message)
+            raise IZoneApiError(message) from err
         except aiohttp.ClientError as err:
-            raise IZoneApiError(
-                f"Error contacting iZone controller at {url}: {err}"
-            ) from err
+            message = f"Error contacting iZone controller at {url}: {err}"
+            _LOGGER.exception(message)
+            raise IZoneApiError(message) from err
 
     async def async_get_system(self) -> dict[str, Any]:
-        # Fetch system-level state (Type 1). Response includes NoOfZones.
+        """Fetch system-level state (Type 1). Response includes NoOfZones."""
         data = await self._post(
             self._request_url,
             {"iZoneV2Request": {"Type": 1, "No": 0, "No1": 0}},
@@ -102,10 +102,12 @@ class IZoneApiClient:
         try:
             return data["SystemV2"]
         except KeyError as err:
-            raise IZoneApiError(f"Unexpected system response shape: {data}") from err
+            message = f"Unexpected system response shape: {data}"
+            _LOGGER.exception(message)
+            raise IZoneApiError(message) from err
 
     async def async_get_zone(self, index: int) -> dict[str, Any]:
-        # Fetch a single zone's state (Type 2).
+        """Fetch a single zone's state (Type 2)."""
         data = await self._post(
             self._request_url,
             {"iZoneV2Request": {"Type": 2, "No": index, "No1": 0}},
@@ -113,10 +115,12 @@ class IZoneApiClient:
         try:
             return data["ZonesV2"]
         except KeyError as err:
-            raise IZoneApiError(f"Unexpected zone response shape: {data}") from err
+            message = f"Unexpected zone response shape: {data}"
+            _LOGGER.exception(message)
+            raise IZoneApiError(message) from err
 
     async def async_get_favourite(self, index: int) -> dict[str, Any]:
-        # Fetch a single favourite's info, including its configured name.
+        """Fetch a single favourite's info, including its configured name."""
         data = await self._post(
             self._request_url,
             {"iZoneV2Request": {"Type": FAVOURITE_REQUEST_TYPE, "No": index, "No1": 0}},
@@ -124,37 +128,47 @@ class IZoneApiClient:
         try:
             return data["SchedulesV2"]
         except KeyError as err:
-            raise IZoneApiError(f"Unexpected favourite response shape: {data}") from err
+            message = f"Unexpected favourite response shape: {data}"
+            _LOGGER.exception(message)
+            raise IZoneApiError(message) from err
 
     async def async_set_power(self, *, on: bool) -> None:
+        """Set the power state of the iZone system."""
         await self._post_command(self._command_url, {"SysOn": 1 if on else 0})
 
     async def async_set_mode(self, mode: int) -> None:
+        """Set the mode of the iZone system."""
         await self._post_command(self._command_url, {"SysMode": mode})
 
     async def async_set_fan(self, fan: int) -> None:
+        """Set the fan speed of the iZone system."""
         await self._post_command(self._command_url, {"SysFan": fan})
 
     async def async_set_setpoint(self, raw_setpoint: int) -> None:
-
-        # Set the system setpoint. Expects the raw protocol value (C * 100) - convert with const.celsius_to_raw() before calling this.
-
+        """Set the system setpoint."""
+        # Expects the raw protocol value (C * 100)
+        # convert with const.celsius_to_raw() before calling this.
         await self._post_command(self._command_url, {"SysSetpoint": raw_setpoint})
 
     async def async_set_zone_mode(self, index: int, mode: int) -> None:
+        """Set a zone's mode."""
         await self._post_command(
             self._command_url, {"ZoneMode": {"Index": index, "Mode": mode}}
         )
 
     async def async_set_zone_setpoint(self, index: int, raw_setpoint: int) -> None:
-        # Set a zone's setpoint. Expects the raw protocol value (C * 100) - convert with const.celsius_to_raw() before calling this.
+        """Set a zone's setpoint."""
+        # Expects the raw protocol value (C * 100) -
+        # convert with const.celsius_to_raw() before calling this.
         await self._post_command(
             self._command_url,
             {"ZoneSetpoint": {"Index": index, "Setpoint": raw_setpoint}},
         )
 
     async def async_set_favourite(self, favourite_index: int) -> None:
-        # Activate a favourite. favourite_index is 0-based (matching the NUM_FAVOURITES range used elsewhere) - the controller itself is 1-based, so we add 1 here.
+        """Activate a favourite."""
+        # favourite_index is 0-based (matching the NUM_FAVOURITES range used elsewhere)
+        # the controller itself is 1-based, so we add 1 here.
         await self._post_command(
             self._command_url, {"FavouriteSet": favourite_index + 1}
         )
