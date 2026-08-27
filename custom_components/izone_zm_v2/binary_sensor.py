@@ -8,16 +8,23 @@ SensorFault (0/1 boolean vs. something else) are inferred from the field
 name only, not confirmed by triggering a real fault. Enable per-zone and
 verify before relying on it for anything automated.
 """
+
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
+from homeassistant.const import EntityCategory
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import EntityCategory
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
@@ -39,11 +46,15 @@ async def async_setup_entry(
         zone = coordinator.data.zones[zone_index]
         if zone.get("Temp") == 0:
             continue
-        entities.append(IZoneZoneSensorFaultBinarySensor(coordinator, entry, zone_index))
+        entities.append(
+            IZoneZoneSensorFaultBinarySensor(coordinator, entry, zone_index)
+        )
     async_add_entities(entities)
 
 
-class IZoneZoneSensorFaultBinarySensor(CoordinatorEntity[IZoneCoordinator], BinarySensorEntity):
+class IZoneZoneSensorFaultBinarySensor(
+    CoordinatorEntity[IZoneCoordinator], BinarySensorEntity
+):
     """Whether a zone's temperature sensor is reporting a fault."""
 
     _attr_has_entity_name = True
@@ -52,7 +63,10 @@ class IZoneZoneSensorFaultBinarySensor(CoordinatorEntity[IZoneCoordinator], Bina
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = False
 
-    def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry, zone_index: int) -> None:
+    def __init__(
+        self, coordinator: IZoneCoordinator, entry: ConfigEntry, zone_index: int
+    ) -> None:
+        """Initialize the binary sensor."""
         super().__init__(coordinator)
         self._zone_index = zone_index
         self._attr_unique_id = f"{entry.entry_id}_zone_{zone_index}_sensor_fault"
@@ -62,6 +76,7 @@ class IZoneZoneSensorFaultBinarySensor(CoordinatorEntity[IZoneCoordinator], Bina
 
     @property
     def is_on(self) -> bool | None:
+        """Return True if the zone's temperature sensor is reporting a fault."""
         value = self.coordinator.data.zones[self._zone_index].get("SensorFault")
         if value is None:
             return None

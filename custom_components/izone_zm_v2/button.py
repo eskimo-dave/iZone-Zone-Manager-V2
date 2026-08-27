@@ -1,14 +1,18 @@
 """Button platform for iZone Local - favourite activation buttons."""
+
 from __future__ import annotations
 
 import asyncio
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from homeassistant.components.button import ButtonEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import IZoneApiError
@@ -18,7 +22,9 @@ from .coordinator import IZoneCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-async def _async_get_favourite_name(coordinator: IZoneCoordinator, index: int) -> str | None:
+async def _async_get_favourite_name(
+    coordinator: IZoneCoordinator, index: int
+) -> str | None:
     """Fetch one favourite's name, falling back to None on failure."""
     try:
         favourite = await coordinator.api.async_get_favourite(index)
@@ -47,7 +53,10 @@ async def async_setup_entry(
     coordinator: IZoneCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     names = await asyncio.gather(
-        *(_async_get_favourite_name(coordinator, index) for index in range(NUM_FAVOURITES))
+        *(
+            _async_get_favourite_name(coordinator, index)
+            for index in range(NUM_FAVOURITES)
+        )
     )
     entities: list[ButtonEntity] = [
         IZoneFavouriteButton(coordinator, entry, index, name)
@@ -68,6 +77,7 @@ class IZoneFavouriteButton(CoordinatorEntity[IZoneCoordinator], ButtonEntity):
         index: int,
         name: str | None,
     ) -> None:
+        """Initialise the favourite button."""
         super().__init__(coordinator)
         self._index = index
         self._attr_unique_id = f"{entry.entry_id}_favourite_{index}"

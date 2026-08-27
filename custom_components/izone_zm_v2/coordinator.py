@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import IZoneApiClient, IZoneApiError
@@ -34,6 +38,7 @@ class IZoneCoordinator(DataUpdateCoordinator[IZoneData]):
         zone_count: int,
         scan_interval_seconds: int = SCAN_INTERVAL_SECONDS,
     ) -> None:
+        """Initialize the coordinator."""
         super().__init__(
             hass,
             _LOGGER,

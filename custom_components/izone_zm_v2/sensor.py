@@ -9,26 +9,28 @@ and a per-zone battery voltage sensor.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_BILLION,
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
+    EntityCategory,
     UnitOfElectricPotential,
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import EntityCategory
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, raw_to_celsius
@@ -95,10 +97,12 @@ class IZoneSupplyTemperatureSensor(_IZoneSystemSensor):
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
     def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the supply temperature sensor."""
         super().__init__(coordinator, entry, "supply_temperature")
 
     @property
     def native_value(self) -> float | None:
+        """Return the supply air temperature in degrees C, or None if unknown."""
         return raw_to_celsius(self._system.get("Supply"))
 
 
@@ -111,10 +115,12 @@ class IZoneHumiditySensor(_IZoneSystemSensor):
     _attr_native_unit_of_measurement = PERCENTAGE
 
     def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the indoor humidity sensor."""
         super().__init__(coordinator, entry, "humidity")
 
     @property
     def native_value(self) -> int | None:
+        """Return the indoor relative humidity percentage, or None if unknown."""
         return self._system.get("InRh")
 
 
@@ -127,10 +133,12 @@ class IZoneCO2Sensor(_IZoneSystemSensor):
     _attr_native_unit_of_measurement = CONCENTRATION_PARTS_PER_MILLION
 
     def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the indoor CO2 sensor."""
         super().__init__(coordinator, entry, "co2")
 
     @property
     def native_value(self) -> int | None:
+        """Return the indoor CO2 level, or None if unknown."""
         return self._system.get("IneCO2")
 
 
@@ -141,13 +149,15 @@ class IZoneVOCSensor(_IZoneSystemSensor):
     _attr_device_class = SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS_PARTS
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = CONCENTRATION_PARTS_PER_BILLION
-    #_attr_entity_registry_enabled_default = False
+    _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the indoor VOC sensor."""
         super().__init__(coordinator, entry, "voc")
 
     @property
     def native_value(self) -> int | None:
+        """Return the indoor VOC level, or None if unknown."""
         return self._system.get("InTVOC")
 
 
@@ -155,7 +165,7 @@ class IZoneFilterStatusSensor(_IZoneSystemSensor):
     """
     Raw filter-warning level from the controller.
 
-    Semantics unconfirmed - FilterWarn is exposed as a raw integer
+    FilterWarn is exposed as a raw integer
     (observed value: 3) rather than mapped to a friendly state, since it's
     unclear whether it's a 0-3 severity scale, a countdown, or something
     else. Need to wait until the clean cycle comes up to see what this value is,
@@ -167,10 +177,12 @@ class IZoneFilterStatusSensor(_IZoneSystemSensor):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the filter status sensor."""
         super().__init__(coordinator, entry, "filter_status")
 
     @property
     def native_value(self) -> int | None:
+        """Return the raw filter warning level, or None if unknown."""
         return self._system.get("FilterWarn")
 
 
@@ -181,10 +193,12 @@ class IZoneWarningsSensor(_IZoneSystemSensor):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the warnings sensor."""
         super().__init__(coordinator, entry, "warnings")
 
     @property
     def native_value(self) -> str | None:
+        """Return the controller's current warnings text, or None if unknown."""
         value = self._system.get("Warnings")
         return value.strip() if isinstance(value, str) else value
 
@@ -196,17 +210,18 @@ class IZoneErrorSensor(_IZoneSystemSensor):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the AC error sensor."""
         super().__init__(coordinator, entry, "ac_error")
 
     @property
     def native_value(self) -> str | None:
+        """Return the AC unit's current error text, or None if unknown."""
         value = self._system.get("ACError")
         return value.strip() if isinstance(value, str) else value
 
 
 class IZoneRunHoursSensor(_IZoneSystemSensor):
-    #Cumulative AC compressor/unit runtime hours - useful for tracking
-    #service/maintenance intervals.
+    """Runtime hours of the compressor."""
 
     _attr_name = "Runtime hours"
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -214,10 +229,12 @@ class IZoneRunHoursSensor(_IZoneSystemSensor):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the compressor runtime hours sensor."""
         super().__init__(coordinator, entry, "run_hours")
 
     @property
     def native_value(self) -> int | None:
+        """Return the compressor runtime hours, or None if unknown."""
         return self._system.get("AcRunH")
 
 
@@ -244,6 +261,7 @@ class IZoneZoneBatterySensor(CoordinatorEntity[IZoneCoordinator], SensorEntity):
     def __init__(
         self, coordinator: IZoneCoordinator, entry: ConfigEntry, zone_index: int
     ) -> None:
+        """Initialise the zone battery voltage sensor."""
         super().__init__(coordinator)
         self._zone_index = zone_index
         self._attr_unique_id = f"{entry.entry_id}_zone_{zone_index}_battery"
@@ -253,4 +271,5 @@ class IZoneZoneBatterySensor(CoordinatorEntity[IZoneCoordinator], SensorEntity):
 
     @property
     def native_value(self) -> int | None:
+        """Return the zone's wireless sensor battery voltage, or None if unknown."""
         return self.coordinator.data.zones[self._zone_index].get("BattVolt")
