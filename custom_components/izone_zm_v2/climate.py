@@ -7,6 +7,7 @@ ClimateEntity per zone (auto-detected at config-flow time from NoOfZones).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
@@ -106,6 +107,7 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
             name="iZone",
             configuration_url=f"http://{host}",
         )
+
     @property
     def _system(self) -> dict[str, Any]:
         return cast("dict[str, Any]", self.coordinator.data.system)
@@ -150,6 +152,7 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
             await self.coordinator.api.async_set_power(on=True)
             izone_mode = HVAC_MODE_TO_IZONE.get(hvac_mode)
             if izone_mode is not None:
+                await asyncio.sleep(0.5)  # wait on controller before changing mode
                 await self.coordinator.api.async_set_mode(izone_mode)
         await self.coordinator.async_request_refresh()
 
