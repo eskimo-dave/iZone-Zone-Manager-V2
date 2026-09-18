@@ -1,19 +1,34 @@
 {
-    "config": {
-        "step": {
-            "user": {
-                "description": "Provide the static IP of your iZone Controller",
-                "data": {
-                    "ip_address": "Static IP Address"
-                }
-            }
-        },
-        "error": {
-            "connection": "Unable to connect to the server.",
-            "unknown": "Unknown error occurred."
-        },
-        "abort": {
-            "already_configured": "This entry is already configured."
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to iZone",
+        "description": "Enter the IP address or hostname of your iZone controller. The number of zones will be detected automatically.",
+        "data": {
+          "host": "Host or IP address"
         }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the iZone controller at that address. Check the IP and that it's reachable on your network."
+    },
+    "abort": {
+      "already_configured": "This iZone controller is already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "iZone settings",
+        "description": "Update the controller's address or how often it's polled.",
+        "data": {
+          "host": "Host or IP address",
+          "scan_interval_seconds": "Poll interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the iZone controller at that address. Check the IP and that it's reachable on your network."
+    }
+  }
 }

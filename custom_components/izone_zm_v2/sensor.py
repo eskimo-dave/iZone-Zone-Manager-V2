@@ -33,7 +33,7 @@ from homeassistant.const import (
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, raw_to_celsius
+from .const import DOMAIN, SLEEP_TIMER_KEY, raw_to_celsius
 from .coordinator import IZoneCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,7 +57,8 @@ async def async_setup_entry(
         IZoneErrorSensor(coordinator, entry),
         IZoneRunHoursSensor(coordinator, entry),
     ]
-
+    if SLEEP_TIMER_KEY in coordinator.data.system:
+        entities.append(IZoneSleepTimerRemainingSensor(coordinator, entry))
     for zone_index in range(coordinator.zone_count):
         zone = coordinator.data.zones[zone_index]
         # Same "disabled zone reports 0" skip used in climate.py, kept
@@ -273,3 +274,23 @@ class IZoneZoneBatterySensor(CoordinatorEntity[IZoneCoordinator], SensorEntity):
     def native_value(self) -> int | None:
         """Return the zone's wireless sensor battery voltage, or None if unknown."""
         return self.coordinator.data.zones[self._zone_index].get("BattVolt")
+
+
+class IZoneSleepTimerRemainingSensor(_IZoneSystemSensor):
+    """Minutes left on the system sleep timer, 0 when it isn't running."""
+
+    _attr_name = "Sleep timer remaining"
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_native_unit_of_measurement = UnitOfTime.MINUTES
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: IZoneCoordinator, entry: ConfigEntry) -> None:
+        """Initialise the sleep timer remaining sensor."""
+        super().__init__(coordinator, entry, "sleep_timer_remaining")
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the minutes left on the sleep timer, or None if unknown."""
+        value = self._system.get(SLEEP_TIMER_KEY)
+        return value if isinstance(value, int) else None

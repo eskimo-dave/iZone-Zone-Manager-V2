@@ -47,6 +47,24 @@ ZONE_MODE_AUTO = 3
 NUM_FAVOURITES = 9
 FAVOURITE_REQUEST_TYPE = 3
 
+# --- Sleep timer -----------------------------------------------------------
+# Asymmetric protocol: the value is READ from SystemV2 as "SleepTimer"
+# (minutes, 0 = off) but WRITTEN as {"SysSleepTimer": n}. Don't unify these.
+SLEEP_TIMER_KEY = "SleepTimer"
+
+SLEEP_TIMER_OPTIONS: dict[str, int] = {
+    "Off": 0,
+    "30 minutes": 30,
+    "1 hour": 60,
+    "2 hours": 120,
+    "3 hours": 180,
+    "4 hours": 240,
+    "5 hours": 300,
+}
+SLEEP_TIMER_MINUTES_TO_OPTION: dict[int, str] = {
+    v: k for k, v in SLEEP_TIMER_OPTIONS.items()
+}
+
 # --- Temperature scaling ---------------------------------------------------
 # CONFIRMED from a live /iZoneRequestV2 response: Setpoint/Temp/Supply are
 # all Celsius * 100 as plain ints (e.g. 1900 == 19.00C, 4165 == 41.65C).

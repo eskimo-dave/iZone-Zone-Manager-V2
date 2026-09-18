@@ -150,6 +150,11 @@ class IZoneApiClient:
         # convert with const.celsius_to_raw() before calling this.
         await self._post_command(self._command_url, {"SysSetpoint": raw_setpoint})
 
+    async def async_set_sleep_timer(self, minutes: int) -> None:
+        """Set the system sleep timer, in minutes. 0 cancels it."""
+        # Write key is SysSleepTimer, not the SleepTimer key it reads back as.
+        await self._post_command(self._command_url, {"SysSleepTimer": minutes})
+
     async def async_set_zone_mode(self, index: int, mode: int) -> None:
         """Set a zone's mode."""
         await self._post_command(
