@@ -154,6 +154,7 @@ class IZoneSystemClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
             if izone_mode is not None:
                 await asyncio.sleep(0.5)  # wait on controller before changing mode
                 await self.coordinator.api.async_set_mode(izone_mode)
+        await asyncio.sleep(0.5)
         await self.coordinator.async_request_refresh()
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:

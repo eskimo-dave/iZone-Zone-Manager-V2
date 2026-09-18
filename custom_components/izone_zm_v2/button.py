@@ -90,4 +90,5 @@ class IZoneFavouriteButton(CoordinatorEntity[IZoneCoordinator], ButtonEntity):
     async def async_press(self) -> None:
         """Activate this favourite."""
         await self.coordinator.api.async_set_favourite(self._index)
+        await asyncio.sleep(0.5)  # add a delay to ensure fav is set before refreshing
         await self.coordinator.async_request_refresh()
