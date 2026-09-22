@@ -191,7 +191,11 @@ class IZoneZoneClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
         HVACMode.FAN_ONLY,
         HVACMode.AUTO,
     )
-    _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
+    _attr_supported_features = (
+        ClimateEntityFeature.TARGET_TEMPERATURE
+        | ClimateEntityFeature.TURN_ON
+        | ClimateEntityFeature.TURN_OFF
+    )
 
     def __init__(
         self,
@@ -252,4 +256,16 @@ class IZoneZoneClimate(CoordinatorEntity[IZoneCoordinator], ClimateEntity):
             HVACMode.FAN_ONLY: ZONE_MODE_OPEN,
         }.get(hvac_mode, ZONE_MODE_OPEN)
         await self.coordinator.api.async_set_zone_mode(self._zone_index, zone_mode)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_on(self) -> None:
+        """Turn on the zone (open it to follow the system thermostatically)."""
+        await self.coordinator.api.async_set_zone_mode(self._zone_index, ZONE_MODE_AUTO)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self) -> None:
+        """Turn off the zone (close it)."""
+        await self.coordinator.api.async_set_zone_mode(
+            self._zone_index, ZONE_MODE_CLOSE
+        )
         await self.coordinator.async_request_refresh()
